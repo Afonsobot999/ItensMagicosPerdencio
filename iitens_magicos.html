@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Perdêncio - O Mago dos Itens Perdidos</title>
+    <style>
+        body { 
+            font-family: 'Georgia', serif; 
+            background-color: #1a1a24; /* Fundo levemente mais místico (azul muito escuro) */
+            color: #f4f4f4; 
+            margin: 0;
+            padding: 40px 20px;
+        }
+        
+        /* Layout Flex para dividir a tela */
+        .layout {
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            gap: 40px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* ----- SEÇÃO DO PERSONAGEM (ESQUERDA) ----- */
+        .personagem-container {
+            flex: 1;
+            max-width: 350px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* Estilo do balão de fala */
+        .balao-fala {
+            position: relative;
+            background: #eaddc5; /* Cor de pergaminho/papel velho */
+            color: #2b2b2b;
+            border-radius: 15px;
+            padding: 20px;
+            font-size: 16px;
+            line-height: 1.5;
+            font-weight: bold;
+            box-shadow: 0px 5px 15px rgba(0,0,0,0.8);
+            margin-bottom: 25px;
+            min-height: 150px; /* Espaço reservado para o texto ser digitado */
+            border: 2px solid #a68c5b;
+        }
+
+        /* O "biquinho" do balão apontando para o Mago */
+        .balao-fala::after {
+            content: '';
+            position: absolute;
+            bottom: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-width: 20px 20px 0 20px;
+            border-style: solid;
+            border-color: #eaddc5 transparent transparent transparent;
+        }
+
+        /* Borda extra para o biquinho combinar com o balão */
+        .balao-fala::before {
+            content: '';
+            position: absolute;
+            bottom: -23px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-width: 22px 22px 0 22px;
+            border-style: solid;
+            border-color: #a68c5b transparent transparent transparent;
+            z-index: -1;
+        }
+
+        /* Cursor piscante do balão (animação em CSS, sem JavaScript) */
+        #cursor {
+            animation: piscar 0.8s steps(1) infinite;
+        }
+        @keyframes piscar {
+            50% { opacity: 0; }
+        }
+
+        /* Imagem do mago */
+        .personagem-imagem {
+            width: 100%;
+            border-radius: 10px;
+            box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.9);
+            border: 3px solid #3a506b;
+        }
+
+        /* ----- SEÇÃO DE ROLAGEM (DIREITA) ----- */
+        .container-rolagem { 
+            flex: 2;
+            box-sizing: border-box;
+            background: #2c2c2c; 
+            padding: 30px; 
+            border-radius: 12px; 
+            border: 3px solid #ffd700; 
+            box-shadow: 0px 0px 20px rgba(0,0,0,0.9);
+            text-align: center;
+        }
+        
+        h1 { 
+            color: #ffd700; 
+            text-shadow: 2px 2px 4px #000;
+            margin-top: 0;
+            margin-bottom: 10px;
+        }
+        p {
+            color: #ccc;
+            margin-bottom: 25px;
+        }
+        .botoes { 
+            display: flex; 
+            flex-wrap: wrap; 
+            justify-content: center; 
+            gap: 12px; 
+            margin-bottom: 30px; 
+        }
+        button { 
+            background-color: #630000; 
+            color: white; 
+            border: 2px solid #ffd700; 
+            padding: 12px 20px; 
+            font-size: 16px; 
+            cursor: pointer; 
+            border-radius: 6px; 
+            transition: 0.2s; 
+            font-weight: bold;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.5);
+        }
+        button:hover { 
+            background-color: #990000; 
+            transform: scale(1.05); 
+        }
+        button.variavel {
+            background-color: #3b3b3b;
+            border-color: #aaa;
+            color: #eee;
+        }
+        button.variavel:hover {
+            background-color: #555;
+        }
+        #resultado { 
+            margin-top: 20px; 
+            padding: 40px 20px; 
+            background-color: #111; 
+            border: 2px dashed #ffd700; 
+            border-radius: 8px; 
+            min-height: 80px; 
+            display: flex; 
+            flex-direction: column;
+            align-items: center; 
+            justify-content: center; 
+            font-size: 28px; 
+            font-weight: bold; 
+            color: #ffd700;
+            text-shadow: 1px 1px 3px #000;
+        }
+        .raridade-label { 
+            font-size: 16px; 
+            color: #aaa; 
+            margin-top: 15px; 
+            font-weight: normal; 
+            font-style: italic;
+        }
+        .contador {
+            font-size: 12px;
+            color: #666;
+            margin-top: 20px;
+        }
+
+        /* Responsividade para telas menores (celulares) */
+        @media (max-width: 850px) {
+            .layout {
+                flex-direction: column;
+                align-items: center;
+            }
+            .personagem-container {
+                width: 100%;
+                max-width: 350px;
+            }
+            .container-rolagem {
+                width: 100%;
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="layout">
+        
+        <div class="personagem-container">
+            <div class="balao-fala">
+                <span id="texto-digitado"></span><span id="cursor">|</span>
+            </div>
+            <img src="toni.jpg" alt="Perdêncio, o Mago dos Itens Perdidos" class="personagem-imagem">
+        </div>
+
+        <div class="container-rolagem">
+            <h1>O Baú de Perdêncio</h1>
+            <p>Mestre, defina a raridade da sua busca e deixe os deuses rolarem os dados!</p>
+            
+            <div class="botoes">
+                <button onclick="rolarItem('comum')">Comum</button>
+                <button onclick="rolarItem('incomum')">Incomum</button>
+                <button onclick="rolarItem('raro')">Raro</button>
+                <button onclick="rolarItem('muitoRaro')">Muito Raro</button>
+                <button onclick="rolarItem('lendario')">Lendário</button>
+                <button onclick="rolarItem('artefato')">Artefato</button>
+                <button class="variavel" onclick="rolarItem('variavel')">Raridade Variável</button>
+            </div>
+
+            <div id="resultado">Perdêncio aguarda sua escolha...</div>
+            
+            <div class="contador">Banco de dados: contando itens...</div>
+        </div>
+
+    </div>
+
+    <script>
+        // ==========================================
+        // O PERSONAGEM
+        // ==========================================
+        // Troque aqui para mudar o nome do mago em todo o site.
+        const NOME_DO_MAGO = "Perdêncio";
+
+        const VELOCIDADE_DIGITACAO = 35;  // ms por letra na apresentação (menor = mais rápido)
+        const VELOCIDADE_REACAO = 22;     // ms por letra nas reações às rolagens
+        const PAUSA_ENTRE_FALAS = 1800;   // ms de pausa entre uma fala e a próxima da apresentação
+
+        // Apresentação: as falas aparecem uma depois da outra
+        const falasDeApresentacao = [
+            "Ah! Um visitante! E nem tropeçou na pilha de botas perdidas. Estou impressionado.",
+            `Eu sou ${NOME_DO_MAGO}, guardião de tudo que o multiverso perdeu, esqueceu ou jurou que nunca teve.`,
+            "Escolha uma raridade e eu reviro o baú pra você. Só não mexa na pilha dos artefatos. Ela morde."
+        ];
+
+        // O que ele diz enquanto procura o item
+        const falasProcurando = [
+            "Hmm, deixa eu ver...",
+            "Só um instante...",
+            "Cadê, cadê...",
+            "Estava aqui ontem..."
+        ];
+
+        // Reação ao item sorteado, de acordo com o botão
+        const reacoes = {
+            comum: [
+                "Esse vivia caindo atrás do sofá dos deuses. Não é glorioso, mas é honesto.",
+                "Comum, sim. Mas já salvou mais aventureiros do que muita espada lendária.",
+                "Achei embaixo de três meias sem par. As melhores coisas se escondem assim.",
+                "Não vai impressionar ninguém na taverna, mas faz exatamente o que promete."
+            ],
+            incomum: [
+                "Olha só! Esse eu estava guardando pra mim. Tudo bem, pode levar.",
+                "Bom achado. Tem alguém numa masmorra por aí procurando isso agora mesmo.",
+                "Esse brilhava de leve no escuro. Bom sinal. Ou vazamento arcano, nunca sei.",
+                "Incomum e bem conservado. Ainda tem cheiro de aventura."
+            ],
+            raro: [
+                "Opa! Esse não estava na pilha de sempre. Alguém vai querer isso de volta.",
+                "Raro! Segure firme, esse tem mania de fugir sozinho.",
+                "Veio com um bilhete preso: “não devolver ao mago”. Que falta de educação.",
+                "Lembro do dono. Chorou três dias quando perdeu. Bom, agora é seu."
+            ],
+            muitoRaro: [
+                "Pelas minhas barbas! Faz décadas que esse não sai do baú.",
+                "Tão raro que eu tinha esquecido dele. E esquecer é a minha especialidade.",
+                "Segure com as duas mãos. Reinos já entraram em guerra por menos que isso."
+            ],
+            lendario: [
+                "Silêncio... Ouviu? É o baú inteiro prestando respeito.",
+                "Lendário! Os bardos vão compor canções sobre quem usar isso. Algumas até afinadas.",
+                "Itens lendários não se perdem por acaso. Esse escolheu a hora de ser achado."
+            ],
+            artefato: [
+                "Não! Esse não! Eu falei pra não mexer na pilha dos artefatos!",
+                "Um artefato... Tudo bem. Respira. Ele provavelmente não está ouvindo a gente.",
+                "Esse aí nunca foi perdido. Foi escondido. E agora você sabe onde está."
+            ],
+            variavel: [
+                "Esse muda de humor conforme a lua. Hoje acordou assim.",
+                "Itens de raridade variável são meus favoritos. Nem eles sabem o que vão ser.",
+                "Sacudi três vezes antes de tirar. Saiu nessa versão, sem devolução."
+            ],
+            // Itens variáveis que ainda não têm versões preenchidas
+            semRaridade: [
+                "Esse aqui nem eu sei quanto vale. Mestre, a palavra final é sua.",
+                "Hmm, esse ainda não decidiu o que quer ser. Deixo a decisão com o mestre."
+            ]
+        };
+
+
+        // ==========================================
+        // BALÃO DE FALA (efeito de digitação)
+        // ==========================================
+        let timeoutFala = null;
+
+        // Digita um texto no balão. Uma fala nova interrompe a anterior.
+        function falar(texto, velocidade, aoTerminar) {
+            clearTimeout(timeoutFala);
+            const alvo = document.getElementById("texto-digitado");
+            const cursor = document.getElementById("cursor");
+            alvo.textContent = "";
+            cursor.style.display = "inline";
+            let letra = 0;
+
+            function proximaLetra() {
+                if (letra < texto.length) {
+                    alvo.textContent += texto.charAt(letra++);
+                    timeoutFala = setTimeout(proximaLetra, velocidade);
+                } else {
+                    cursor.style.display = "none";
+                    if (aoTerminar) timeoutFala = setTimeout(aoTerminar, PAUSA_ENTRE_FALAS);
+                }
+            }
+            proximaLetra();
+        }
+
+        // Escolhe uma fala da lista sem repetir a última dita dessa mesma lista
+        const ultimaFalaDe = new Map();
+        function escolherFala(lista) {
+            let fala;
+            do {
+                fala = lista[Math.floor(Math.random() * lista.length)];
+            } while (fala === ultimaFalaDe.get(lista) && lista.length > 1);
+            ultimaFalaDe.set(lista, fala);
+            return fala;
+        }
+
+        function apresentar(indice = 0) {
+            const temProxima = indice + 1 < falasDeApresentacao.length;
+            falar(falasDeApresentacao[indice], VELOCIDADE_DIGITACAO, temProxima ? () => apresentar(indice + 1) : null);
+        }
+
+        // Coloca o nome do mago na página
+        document.title = `${NOME_DO_MAGO} - O Mago dos Itens Perdidos`;
+        document.querySelector("h1").textContent = `O Baú de ${NOME_DO_MAGO}`;
+        document.querySelector(".personagem-imagem").alt = `${NOME_DO_MAGO}, o Mago dos Itens Perdidos`;
+        document.getElementById("resultado").textContent = `${NOME_DO_MAGO} aguarda sua escolha...`;
+
+        // Começa a apresentação assim que a página carrega
+        window.onload = () => apresentar();
+
+
+        // ==========================================
+        // PESO DOS ITENS DO GUIA DO MESTRE
+        // ==========================================
+        // Quantas vezes mais chance um item do Guia do Mestre tem de sair
+        // em comparação com os outros itens da mesma raridade.
+        // 1 = todos com a mesma chance. 3 = três vezes mais chance.
+        const PESO_GUIA_DO_MESTRE = 3;
+
+
+        // ==========================================
+        // BANCO DE DADOS DE ITENS
+        // ==========================================
+        const listaDeItens = {
+            comum: [
+                "Acendedor de Lâmpadas", "Amuleto do Fragmento Negro", "Amuleto Relógio", "Armadura Ardente", 
+                "Armadura Brilhante", "Armadura da Garra", "Armadura da Libertação", "Armadura do Vagal", 
+                "Bastão Colapsador", "Bengala do Veterano", "Bolha de Respiração", "Bolsa Conveniente de Especiarias de Heward", 
+                "Boneca Falante", "Botas de Pegadas Falsas", "Broche Guarda-chuva", "Cachimbo das Lembranças", 
+                "Cachimbo dos Monstros de Fumaça", "Cadeado da Enganação", "Cajado Canoro", "Cajado da Ornamentação", 
+                "Cajado das Flores", "Cajado de Guerra", "Caneca da Sobriedade", "Capa da Ondulação", 
+                "Capa de Armamentos", "Capa de Muitas Modas", "Caranguejo Mecânico", "Chapéu da Feitiçaria", 
+                "Chapéu dos Vermes", "Chave dos Sonhos", "Chave Misteriosa", "Chifre do Alarme Silencioso", 
+                "Corda do Reparo", "Cordas de Marionetes", "Creme de Prata", "Cubo Térmico", "Cápsula de Pressão", 
+                "Dado do Charlatão", "Elmo Amedrontador", "Elmo do Horror", "Escudo da Expressão", "Esfera da Direção", 
+                "Esfera do Tempo", "Espada Lunar", "Espanador", "Estátua de Adoração a Sekolah", "Fagulha", 
+                "Ferramenta Integrada", "Flecha Inquebrável", "Garrafa Térmica de Café Ilimitado", "Gota de Nutrição", 
+                "Gota de Refrescância", "Grimório Duradouro", "Gás do Sono", "Instrumento de Escrita", 
+                "Instrumento de Ilusões", "Lanterna de Rastreamento", "Libramas de Avaliação", "Luvas do Charlatão", 
+                "Manto do Paraíso", "Mastro da Diminuição", "Mastro da Pescaria", 
+                "Membro Protético", "Moeda de Sondagem", "Munição Colossal", 
+                "Olhos de Ersatz", "Osso de Animação", "Pelúcia Fofinha de Strixhaven", 
+                "Perfume do Encantamento", "Pingente de Máscara", "Pote de Limo", "Poção de Escalar", 
+                "Pílula de Poder", "Rações de Fungos", "Roupas do Remendo", "Rubi do Mago da Guerra", 
+                "Sacos de Evidência", "Tatuagem do Iluminador", "Tatuagem do Mascarado", "Tintura de Humor", 
+                "Trombeta da Audição", "Turbante Pro Deserto", "Vara de Pescar Rtx 9.000", "Varinha da Pirotecnia", 
+                "Varinha da Regência", "Varinha de Batalha", "Varinha de Caretas", "Varinha de Sorrisos", 
+                "Varinha de Turimbar", "Varinha Falante", "Varinha Sorridente", "Vaso do Despertar", 
+                "Vela das Profundezas", "Vola’khesh"
+            ],
+            incomum: [
+                "Adaga de Piranhas", "Adaga Infernal", "Agulha de Conserto", "Alaúde de Doss", "Alfange Vampira", 
+                "Aljava de Ehlonna", "Amuleto de Bronze", "Amuleto de Proteção Contra Detecção e Localização", 
+                "Amuleto de Sapo", "Amuleto do Bêbado", "Amuleto do Coveiro", "Amuleto do Unicórnio", 
+                "Amuleto dos Aliados", "Anel Contingente", "Anel da Floresta", "Anel de Andar na Água", 
+                "Anel de Calor", "Anel de Coleta", "Anel de Escudo Mental", "Anel de Identificar a Verdade", 
+                "Anel de Lanterna", "Anel de Magia", "Anel de Natação", "Anel de Obscuração", "Anel de Saltar", 
+                "Anel do Choro", "Anel dos Pequenos Rituais", "Anel Fraternal", "Aparato de Mizzium", 
+                "Aranha de Jade", "Arco de Espinhos", "Arma da Fúria do Dragão Adormecido", "Arma de Alerta", 
+                "Arma de Aço Perolado", "Arma de Byeshk", "Arma de Fogo Infernal", "Arma de Teletransporte", 
+                "Arma do Dízimo", "Arma Faminta", "Armadura da Guarda de Pedra", "Armadura de Adamante", 
+                "Armadura de Mitral", "Armadura do Marinheiro", "Arranavel", "Arreio Alado", "Astrolábio Espacial", 
+                "Azagaia de Relâmpago", "Açoite do Tirano", "Bandolim de Fochlucan", "Baralho das Maravilhas", 
+                "Barril de Fogo do Alquimista", "Bastão do Gatuno", "Bastão Imóvel", "Botas Aladas", 
+                "Botas de Caminhar e Saltar", "Botas de Marinheiro", "Botas do Inverno", "Botas Élficas", 
+                "Braçadeiras da Mente de Ferro", "Braçadeiras de Arquearia", "Broche da Essência Viva", 
+                "Broche do Escudo", "Bumerangue da Tempestade", "Caixa de Quebra-cabeças Infernal", "Cajado Cegante", 
+                "Cajado da Aranha", "Cajado da Defesa", "Cajado da Píton", "Cajado da Víbora", "Caneta Esmeralda", 
+                "Capa de Respirar na Água", "Cartilha de Lorehold", "Cartilha de Prismari", "Cartilha de Quandrix", 
+                "Cartilha de Silverquill", "Cartilha de Witherbloom", "Cartola do Mágico", "Chama Viva", 
+                "Chapéu de Disfarce", "Chapéu do Capitão", "Chave Mestra", "Chocalho de Cobra", "Cinto de Zombaria", 
+                "Cinto do Brigão da Taverna", "Cinturão Antigravitacional", "Cinturão da Conquista", "Colar de Adaptação", 
+                "Concha do Lobo do Mar", "Contas Espirituais", "Corda de Escalada", "Correntes de Selamento", 
+                "Corvo de Prata", "Couro de Enguia", "Cristal Psiônico", "Cutelo do Cabo Dourado", "Cítara de Mac-fuirmidh", 
+                "Dardo Teleguiado", "Decantador de Vinho Infinito", "Decantador de Água Infinita", "Defensor Sombrio", 
+                "Diadema da Destruição", "Dízimo de Sangue", "Elixir de Frutomel", "Elmo de Ação Subaquática", 
+                "Elmo de Compreensão de Idiomas", "Elmo de Pégaso", "Elmo de Telepatia", "Emblema do Protetor", 
+                "Escama Ornamental do Dragão Adormecido", "Escaravelho Atirador", "Escavador Mágico", "Escudo Angelical de Aço", 
+                "Escudo Condutor", "Escudo de Arremesso", "Escudo Reverberante", "Escudo Sentinela", "Espada Açoitadora", 
+                "Espada da Canção", "Espada da Perdição", "Espada da Vingança", "Espelho do Lisonjeio", "Estrela do Mago", 
+                "Ferramenta de Mestre", "Filtro de Ar", "Filtro do Amor", "Fitoterapia", "Flauta Assombrada", 
+                "Flauta de Osso", "Flauta dos Esgotos", "Fluído de Camaleão", "Flâmula de Strixhaven", 
+                "Foco Arcano do Dragão Adormecido", "Fragmento da Agréstia das Fadas", "Fragmento da Morte", "Frasco de Sopro", 
+                "Gancho de Reforço", "Garrafa de Fumaça Eterna", "Gema da Luminosidade", "Gema Elemental", "Globo de Fluxo", 
+                "Gramática das Línguas", "Iluminadora", "Insígnia dos Garras", "Jarro de Alquimia", "Lanterna de Revelação", 
+                "Leque do Vento", "Lira de Canção da Sereia", "Luvas da Primavera", "Luvas de Apanhar Projéteis", 
+                "Luvas de Armazenamento", "Luvas de Nadar e Escalar", "Luvas do Ladrão", "Lágrimas de Lagarto", 
+                "Lâmina da Fúria", "Lâmina Sanguínea", "Lâmpada da Honestidade", "Machado Sanguinário", "Malho Sonoro", 
+                "Manopla Rastejante", "Manoplas Brilhantes", "Manoplas de Força do Ogro", "Manoplas dos Valorosos", 
+                "Manto da Arraia", "Manto da Natureza", "Manto de Navalhas", "Manto de Proteção", "Manto do Aracnídeo", 
+                "Manto do Outono", "Manto Élfico", "Manto Élfico (piwafi)", "Medalhão de Pensamentos", "Mensageiro Final", 
+                "Mochila Balão", "Mochila de Carga", "Moeda da Sorte", "Moeda de Alma", "Morcegos de Pirita", 
+                "Munição Aquática", "Munição Solar", "Munição Trespassora", "Máscara Aereni", "Olho Errante", 
+                "Olhos de Visão Momentânea", "Olhos de Águia", "Olhos do Encantamento", "Pacificador", "Papel de Pássaro", 
+                "Pedra da Boa Sorte", "Pedra da Sorte Maldita", "Pedra Sensorial", "Pedras de Mensagem", "Periapto de Cicatrização", 
+                "Periapto de Saúde", "Perna-de-pau Mecânica", "Piroconvergente", "Planador", "Poção de Amizade Animal", 
+                "Poção de Aumentar", "Poção de Controle dos Mortos-vivos", "Poção de Envenenamento", "Poção de Regeneração", 
+                "Poção de Resistência", "Poção de Respirar na Água", "Poção de Sopro de Fogo", "Poção de Vantagem", 
+                "Poção do Furioso", "Pulseira do Mitomaníaco", "Pulverizador", "Pérola do Poder", "Pílula de Adamante", 
+                "Pílula do Céu Rosa", "Pó da Seca", "Pó das Fadas", "Pó de Corrosão", "Pó de Desaparecimento", 
+                "Pó de Espirrar e Tossir", "Pólvora", "Recipiente do Dragão Adormecido", "Robe das Serpentes", 
+                "Robe dos Itens Úteis", "Roupa com Asas", "Roupa de Couro de Troll", "Sabre do Frenesi", "Sais de Derretimento", 
+                "Sandálias de Patas de Aranha", "Sanguessuga", "Sela das Areias", "Sela de Cavaleiro", "Selante Soberano", 
+                "Selo de Ferro", "Sinete do Alarme", "Sino de Orichalco", "Sonhos Felizes", "Suco da Disparada", 
+                "Sussurro do Espião", "Tambores do Pânico", "Tatuagem da Garra Mística", "Tatuagem de Gavinhas Entrelaçadas", 
+                "Tatuagem dos Príncipes Gêmeos", "Tempero Delicioso", "Tiara do Intelecto", "Tintura de Guerra Goblin", 
+                "Tridente de Comandar Peixes", "Turbante de Escalada", "Unguento de Keoghtom", "Varinha de Detectar Magia", 
+                "Varinha de Mísseis Mágicos", "Varinha de Retaliação", "Varinha de Segredos", "Varinha de Teia", 
+                "Vassoura Voadora", "Vela do Amanhã", "Verme da Língua", "Óculos Noturnos", "Óculos para Leitura de Objetos", 
+                "Óleo Escorregadio"
+            ],
+            raro: [
+                "Adaga da Vida Roubada", "Adaga Dente de Dragão", "Adaga do Envenenamento", "Algemas Dimensionais", 
+                "Algemas dos Magos", "Amuleto da Aparência", "Amuleto da Cabeça de Lobo", "Amuleto de Comandar Plantas", 
+                "Amuleto de Saúde", "Amuleto Infernal", "Anel da Esfera", "Anel da Marionete", "Anel de Armazenar Magia", 
+                "Anel de Ação Livre", "Anel de Cativar Animais", "Anel de Evasão", "Anel de Pacto", "Anel de Proteção", 
+                "Anel de Queda Suave", "Anel de Resistência", "Anel de Salvação Temporal", "Anel de Visão de Raio-x", 
+                "Anel do Aríete", "Anel do Dragão", "Anel do Poder Celestial", "Anel do Vórtice", "Anel dos Quatro Ventos", 
+                "Anel dos Segredos Perfeitos", "Arco da Asa do Dragão", "Arma da Fúria do Dragão Desperto", "Arma da Morte Certa", 
+                "Arma Viciosa", "Armadura de Mizzium", "Armadura de Resistência", 
+                "Armadura de Vulnerabilidade", "Armadura do Caçador de Bruxas", "Armadura Motorizada", "Arpão de Caça", 
+                "Arquivo de Astromancia", "Asas Voadoras", "Atlas do Horizonte Infinito", "Avental de Açougueiro", 
+                "Açoite do Ferrete", "Bacia de Comandar Elementais da Água", "Banco Cósmico", "Bandeira da Runa Krig", 
+                "Bandoleira Extradimensional", "Barco Dobrável", "Bastão de Obediência", "Bastão do Tentáculo", 
+                "Bebida Energética", "Besta Estelar", "Bestralhadora", "Bodes de Marfim", "Botas da Celeridade", 
+                "Botas de Levitação", "Botas de Velocidade", "Braceletes de Defesa", "Braseiro de Comandar Elementais do Fogo", 
+                "Braçadeira de Adagas Voadoras", "Braçadeiras de Asmodeus", "Buraco Portátil", "Bênção dos Aracnídeos", 
+                "Cachorro de Ônix", "Cadeia de Barreiras", "Cajado da Garra Marfim", "Cajado das Florestas", "Cajado de Cura", 
+                "Cajado de Definhamento", "Cajado de Enfeitiçar", "Cajado de Enxame de Insetos", "Cajado de Gulthias", 
+                "Cajado do Sol", "Caldeirão da Abundância", "Capa do Saltimbanco", "Carrilhão de Abertura", 
+                "Cartilha do Tecelão de Corações", "Caveira do Conhecimento Egoísta", "Caçadora de Tesouros", "Cetro do Governante", 
+                "Cinto dos Anões", "Cinturão de Força do Gigante da Colina", "Colar de Bolas de Fogo", "Colar de Bronze", 
+                "Compêndio Alquímico", "Concha de Detecção", "Concha de Teletransporte", "Contas de Força", 
+                "Controlador de Máquinas", "Corda de Estrangulamento", "Coroa de Proteção Mental", "Corrente de Contas de Oração", 
+                "Corselete de Couro", "Coruja de Serpentina", "Couraça de Mitral Fundido", "Couro Batido Encantado", 
+                "Couro de Replicante", "Cristal do Orador de Pedra", "Cubo de Força", "Círculo de Gelo Negro", 
+                "Códice das Leis Diabólicas", "Códice do Planauta", "Códice Thealnakkar", "Destilado de Escorpião", 
+                "Diamante do Sol", "Distintivo da Guarda", "Elefante de Mármore", "Elixir de Saúde", "Elmo de Teletransporte", 
+                "Escama Ornamental do Dragão Desperto", "Escudo Apanhador de Flechas", "Escudo de Atração de Projéteis", 
+                "Escudo de Investida", "Escudo do Pária", "Espada do Furto de Vidas", "Espada do Sangramento", 
+                "Espada do Vingador", "Espada Serrilhada Dente-de-tubarão", "Espelho do Sábio", "Faixas de Ferro de Bilarro", 
+                "Ferraduras da Velocidade", "Foco Arcano do Dragão Desperto", "Forjadora do Sol", "Fortaleza Instantânea de Daern", 
+                "Fragmento Astral", "Fragmento de Essência do Plano Exterior", "Fragmento de Essência Elemental", 
+                "Fragmento do Pendor das Sombras", "Fragmento do Plano Distante", "Frasco da Ganância", "Funda dos Pássaros Gêmeos", 
+                "Fêmur de Santa Markóvia", "Gancho do Deleite do Pescador", "Garra da Runa Wyrm", "Garras de Tríbulo Brutal", 
+                "Gema de Visão", "Granada Atordoante", "Granada de Concussão", "Grifo de Bronze", "Guia de Terreno Favorito", 
+                "Iglu Instantâneo", "Incensário do Devoto", "Irmão das Sombras", "Juntas Ardentes", "Jóia das Sete Cores", 
+                "Lanterna do Capitão", "Lança Estígia", "Leme de Spelljammer", "Leões Dourados", "Librama de Almas e Carne", 
+                "Lira de Cli", "Lira de Construção", "Livro dos Presságios", "Luvas de Destreza", "Lâmina Cristal", 
+                "Lâmina de Acheron", "Lâmina do Esquecimento", "Lâmina do Juramento", "Lâmina do Sol", "Lâmina Paralisante", 
+                "Língua Flamejante", "Machado do Lenhador", "Machado Furioso", "Malha Élfica", "Malhete da Runa Venn", 
+                "Mandolim de Canaith", "Manoplas da Fúria Flamejante", "Manoplas da Ira", "Manto de Carisma", "Manto de Deslocamento", 
+                "Manto de Resistência à Magia", "Manto do Cão Infernal", "Manto do Morcego", "Manto Élfico (piwafi) de Resistência a Fogo", 
+                "Manuscrito Duplícito", "Matadora de Devoradores", "Matadora de Dragões", "Matadora de Gigantes", "Matadora de Zumbis", 
+                "Maça da Destruição", "Maça do Rompimento", "Maça do Terror", "Mega Filtro de Ar", "Mimir", "Morteiro de Mizzium", 
+                "Mosca de Ébano", "Munição de Detonação", "Munição de Fogo Infernal", "Opala da Runa Ild", "Orbe da Runa Stein", 
+                "Orbe do Professor", "Ordem Condensada", "Pedra de Comandar Elementais da Terra", "Pedra de Sangue", 
+                "Pedra Iônica da Prontidão", "Pedra Iônica da Proteção", "Pedra Iônica do Armazenamento", "Pedra Iônica do Sustento", 
+                "Penas de Quaal", "Penas de Quaal - Chicote", "Penas de Quaal - Cisne", "Penas de Quaal - Leque", 
+                "Penas de Quaal - Pássaro", "Penas de Quaal - Árvore", "Penas de Quaal - Âncora", "Pergaminho de Proteção", 
+                "Periapto de Proteção Contra Veneno", "Periapto de Sabedoria", "Pistola de Agulhas", "Pistola Paralisante", 
+                "Pluma de Invocar Chocobos", "Poção de Armadura", "Poção de Clarividência", "Poção de Encolher", 
+                "Poção de Forma Aquosa", "Poção de Forma Gasosa", "Poção de Heroísmo", "Poção de Invulnerabilidade", 
+                "Poção de Ler Mentes", "Poção de Potência Máxima", "Poção do Demônio", "Poção do Sonho", "Presa do Guardião", 
+                "Psicossérico", "Pérola das Sirinas", "Pó de Vida", "Recipiente do Dragão Desperto", "Robe dos Olhos", 
+                "Rodas de Propulsão", "Rosa Cromática", "Saco de Feijões", "Sacola Prestativa de Heward", "Sanfona do Folião", 
+                "Sangue de Vampiro", "Sino de Galho", "Suco Poderoso", "Tapa-olho do Patife", "Tapa-olho do Pirata", 
+                "Tatuagem da Marca do Pendor das Sombras", "Tesouras de Corte de Sombra", "Tirso de Rillifane", "Traje Espacial", 
+                "Tratado Fulminante", "Tridente Caniano", "Trombeta da Destruição", "Varinha da Escuridão", "Varinha das Maravilhas", 
+                "Varinha de Bolas de Fogo", "Varinha de Detecção de Inimigos", "Varinha de Globos Viscosos", "Varinha de Inverno", 
+                "Varinha de Medo", "Varinha de Obrigação", "Varinha de Paralisia", "Varinha de Relâmpagos", "Varinha do Terror", 
+                "Velas Indestrutíveis", "Versos de Proteção", "Ícone do Terror", "Óleo da Enganação", "Óleo de Forma Etérea"
+            ],
+            muitoRaro: [
+                "Abracadabrus", "Adaga Sacrificial", "Almanaque de Máquinas Infernais", "Almofada de Lírio", "Ametista Magnética", 
+                "Amuleto da Duplicidade", "Amuleto da Mudança de Forma", "Amuleto da Traição", "Amuleto de Beleza das Fadas", 
+                "Amuleto dos Planos", "Anel da Amizade", "Anel da Eterna Juventude", "Anel da Reversão", 
+                "Anel da Traição", "Anel de Dupla Resistência", "Anel de Estrelas Cadentes", "Anel de Regeneração", 
+                "Anel de Telecinésia", "Arco da Luz Estelar", "Arco do Cupido", "Arco do Juramento", "Arma da Fúria do Dragão Vígil", 
+                "Arma da Paralisia Agonizante", "Arma de Ossos Diabólicos", "Arma de Perfuração", "Arma do Caçador de Bruxas", 
+                "Arma Imóvel", "Armadura Anã", "Armadura da Última Posição", "Armadura de Chardalyn", 
+                "Armadura de Dupla Resistência", "Armadura Demoníaca", "Arremessador Anão", "Açoite de Loviathar", "Baluarte Infernal", 
+                "Bastão de Absorção", "Bastão de Prontidão", "Bastão de Segurança", "Batedora de Dragões", 
+                "Bolsa Devoradora", "Braceletes de Magia de Pedra", "Brunea de Escamas de Dragão", "Bússola Bruxólica", 
+                "Bússola dos Desejos", "Cajado da Malícia", "Cajado de Ataque", "Cajado de Dunamancia", "Cajado de Trovão e Relâmpago", 
+                "Cajado do Fogo", "Cajado do Frio", "Cajado do Lorde Anão", "Cajado do Poder", "Cajado do Viajante", "Cajado Místico", 
+                "Caldeira de Renascimento", "Canhão Arcano", "Carta do Destino", "Carta Euryale", "Casaco de Muitos Olhos", 
+                "Casaco do Caçador", "Cetro de Chamas Infernais", "Cetro do Senhor da Tempestade", "Chama Negra", "Cimitarra de Velocidade", 
+                "Cimitarras Destruidoras", "Cinturão de Força do Gigante de Fogo", "Cinturão de Força do Gigante de Gelo", 
+                "Cinturão de Força do Gigante de Pedra", "Clava de Himatar", "Conjunto do Lorde Mascarado", "Coroa de Ferro Infernal", 
+                "Coroa do Rei Caído", "Corta-rochas", "Crônica Cristalina", "Diadema de Lady Armatha", "Docente", "Dragonete de Corais", 
+                "Elmo Brilhante", "Elmo de Comandar Corruptores", "Escama Ornamental do Dragão Vígil", 
+                "Escudo Animado", "Escudo de Proteção Contra Magia", "Escudo Devastador", "Escudo Negro de Avernus", "Escudo Safira", 
+                "Esfolador Infernal", "Esmagadora do Crepúsculo", "Espada da Retribuição", "Espada Dançarina", "Espada Decepadora", 
+                "Espada dos Párias", "Espelho do Aprisionamento", "Estandarte de Batalha Infernal", "Ferraduras do Zéfiro", 
+                "Flecha Assassina", "Flâmula da Runa Vind", "Foco Arcano do Dragão Vígil", 
+                "Foco Arcano do Poço de Poder", "Fragmento de Runa Ise", "Fura-súcubos", 
+                "Furacão de Runaan", "Garrafa do Efreeti", "Gula do Abismo", "Harpa de Anstruth", 
+                "Jambiya da Morte Ardente", "Ladra das Nove Vidas", "Lança da Vingança", "Lança Destruidora de Corações", 
+                "Lingote da Runa Skold", "Luvas de Briga", "Lâminas Melairkyn", "Malho Congelado", "Manto da Aranha", 
+                "Manto de Batalha", "Manual de Rapidez de Movimentos", "Manual de Saúde Corporal", "Manual do Bom Exercício", 
+                "Manual dos Golens", "Marca Congelante", "Mega Poção de Armadura", "Mega Poção do Demônio", "Mega Suco da Disparada", 
+                "Morelandita", "Munição do Lamento", "Munição Explosiva", "Munições Arcanas", "Máscara do Pária", 
+                "Orbe de Devastação", "Orbe de Navegação", "Orbe do Véu", "Ornitóptero de Voo", "Pedra Dissipadora", 
+                "Pedra Iônica da Agilidade", "Pedra Iônica da Fortitude", "Pedra Iônica da Força", "Pedra Iônica da Intuição", 
+                "Pedra Iônica da Liderança", "Pedra Iônica de Absorção", "Pedra Iônica do Intelecto", "Pesadelo", 
+                "Pigmentos Maravilhosos de Nolzur", "Pistolas Dominator", "Poeira da Vida", "Poção de Devoção", "Poção de Invisibilidade", 
+                "Poção de Longevidade", "Poção de Possibilidades", "Poção de Velocidade", "Poção de Vitalidade", "Poção de Voo", 
+                "Poção do Carniçal", "Poção Milenar", "Poção Máxima", "Presa da Geada", "Pó de Reencarnação", 
+                "Recipiente do Dragão Vígil", "Robe das Cores Cintilantes", "Robe das Estrelas", "Sabre do Sultão", "Sangue de Anjo", 
+                "Sino do Exílio", "Steel", "Tapete Voador", "Tatuagem de Absorção", "Tatuagem de Fantasma", 
+                "Tatuagem do Poço de Vida", "Terror dos Tiranos", "Tesoura Cortadora de Destinos", "Tomo Amplificador", 
+                "Tomo da Compreensão", "Tomo de Liderança e Influência", "Tomo dos Grandes Pensamentos", "Tomo Rápido", 
+                "Tonfas Espirituais", "Traje da Súcubo Sedutora", "Túnica Talismânica de 99 Nomes", 
+                "Varinha de Metamorfose", "Vela de Invocação", "Velas Fantasmagóricas", 
+                "Wyvern de Diamante", "Água Milagrosa", "Âncora Dimensional", "Égide Obsidiana", "Óleo de Precisão"
+            ],
+            lendario: [
+                "Adaga Cerimonial de Rakdos", "Afogadora", "Albruína", "Anel de Caeli", "Anel de Comandar Elementais", 
+                "Anel de Comandar Elementais da Terra", "Anel de Comandar Elementais da Água", "Anel de Comandar Elementais do Ar", 
+                "Anel de Comandar Elementais do Fogo", "Anel de Invisibilidade", "Anel de Invocação de Djinni", "Anel de Nuada", 
+                "Anel de Proteção Contra Mortos-vivos", "Anel de Refletir Magias", "Anel de Tripla Resistência", "Anel do Imitador", 
+                "Anel dos Três Desejos", "Aniquilador de Topázio", "Anéis de Baltor", "Arma da Fúria do Dragão Ascendente", 
+                "Arma Flatulenta", "Armadura Berserker", "Armadura de Invulnerabilidade", "Armadura de Placas da Forma Etérea", 
+                "Armadura de Placas das Almas Atormentadas", "Armadura de Placas do Dragão de Obsidiana", 
+                "Armadura de Placas do Esfolador de Demônios", "Armadura de Tripla Resistência", 
+                "Armadura de Warmog", "Armadura Dilatória", "Armadura do Coração de Dragão", "Arreio Infernal", "Azuredge", 
+                "Bandolim de Richard - \"the Bones\"", "Baralho de Muitas Coisas", "Baralho de Muito Mais Coisas", "Bastão de Ressurreição", 
+                "Bastão do Grande Poder", "Borda de Prata", "Cachecol Platinado", "Cajado do Arcano", 
+                "Cajado do Dragão de Ahghairon", "Cajado do Lá e Cá", "Cajado Negro", "Canário de Ouro", "Capa de Ampliação", 
+                "Carta da Estrela", "Carta da Ruína", "Carta das Chamas", "Carta do Tolo", "Cetro da Serpente", "Cetro de Korolnor", 
+                "Cetro do Olho do Tirano", "Chave de Orichalco", "Chave do Infiltrador", "Chifre do Chamado da Morte", 
+                "Chinelos de Halasahr", "Ciclone dos Quatro Planos", "Cinturão da Tempestade", "Cinturão de Força do Gigante da Tempestade", 
+                "Cinturão de Força do Gigante das Nuvens", "Cola Soberana", "Coroa de Prisma", "Coroa Iônica", "Coroa Perdida de Besilmer", 
+                "Couro do Guardião Feral", "Cristal do Guardião", "Crânio de Vrouk'zus, o Imundo", "Cubo do Portal", "Defensora", 
+                "Desolação", "Destruidora de Tramas", "Determinação", "Devoradora de Santuários", "Dispositivo de Kwalish", 
+                "Elmo da Disjunção", "Elmo dos Dragões", "Enviada da Morte", "Escama Ornamental do Dragão Ascendente", 
+                "Escaravelho de Proteção", "Escudo de Bubatis", "Escudo de Tiamat", "Escudo do Senhor Oculto", "Escudo do Sol Negro", 
+                "Escudo Encouraçado Flamejante", "Esfera de Aniquilação", "Esmagador", "Espada da Chama Brilhante", "Espada da Retaliação", 
+                "Espada da Ruína Mundial", "Espada de Arak", "Espada do Rei Caído", "Espada dos Planos", "Espada dos Vales", 
+                "Espada Perversora", "Espada Solar", "Espada Vorpal", "Foco Arcano do Dragão Ascendente", "Frasco de Ferro", 
+                "Fúria do Deva", "Fúria do Vento", "Garrafa de Magia", "Gema da Teia Rubi", "Golpeadora Ígnea", "Grandark", 
+                "Grande Maça de Nuada", "Grimório do Cajado Negro", "Grimório Infinito", "Harpa de Oilamh", "Harpa Dourada da Abundância", 
+                "Hazirawn", "Herética", "Incisor", "Ira de Durmathoin", "Juramento de Solamnia", "Jóia da Acuidade", "Lanche-rápido", 
+                "Lança das Profundezas de Dorn", "Lança do Dragão", "Lâmina da Carnificina", "Lâmina da Lua", "Lâmina da Morte", 
+                "Lâmina da Sorte", "Lâmina da Verdade", "Lâmina de Lathander", "Lâmina do Mago Vermelho", "Lâmina do Poder Ardente", 
+                "Lâmina Ondulante", "Língua Longa", "Machado Grande de Gurt", "Malfeitor", "Malha do Efreeti", "Maléfico", 
+                "Mangual de Tiamat", "Manoplas de Couro Infernal", "Manoplas de Moander", "Manto de Invisibilidade", "Martelo dos Trovões", 
+                "Matadora de Orcs", "Matalotok", "Mensageiro do Ódio", "Mironus", "Munição do Ceifador", "Mythallar", "Máscara de Bobo da Corte", 
+                "Máscara de Dragão", "Máscara de Orlgaun", "Máscara do Dragão Azul", "Máscara do Dragão Branco", "Máscara do Dragão Negro", 
+                "Máscara do Dragão Verde", "Máscara do Dragão Vermelho", "Namarra", "Navalha Negra", "Olho de Opala Negra", "Onda", 
+                "Orbe de Murgaxor", "Orbe de Mythanthar", "Palavra de Graz'zt", "Pedra da Morte", "Pedra Filosofal", 
+                "Pedra Iônica Cósmica da Alma", "Pedra Iônica Cósmica da Mente", "Pedra Iônica Cósmica da Realidade", 
+                "Pedra Iônica Cósmica do Espaço", "Pedra Iônica Cósmica do Poder", "Pedra Iônica Cósmica do Tempo", 
+                "Pedra Iônica da Grande Absorção", "Pedra Iônica da Maestria", "Pedra Iônica da Regeneração", "Peitoral de Kamvuul Norek", 
+                "Peitoral de Nuada", "Pergaminho de Azumar", "Pergaminho de Fuga", "Pergaminho de Invocar Tarrasques", "Pergaminho do Cometa", 
+                "Pingente de Rahasia", "Portadora da Alvorada", "Poço dos Muitos Mundos", "Poção da Majestade Draconiana", 
+                "Poção de Cura Completa", "Poção de Tamanho do Gigante", "Presa de Ferro", "Punhal Uivante", "Pérola da Noite", 
+                "Pérola de Ébano", "Píxies do Pandemônio", "Recipiente do Dragão Ascendente", "Robe do Arquimago", "Runa Cristal", 
+                "Sabre Glorioso", "Sangue de Fogo", "Selo de Salomão", "Sinal de Luxon", "Solvente Universal", "Sorvedora de Mil Vidas", 
+                "Símbolo Sagrado do Corvo", "Talismã da Bondade Pura", "Talismã da Esfera", "Talismã de Shajar", "Talismã do Mal Absoluto", 
+                "Tatuagem da Fúria Sanguinária", "Tempestade Mental", "Tomo da Língua Quieta", "Tormento de Liandry", "Tábua do Despertar", 
+                "Varinha do Djinni", "Vingadora Sagrada", "Viseira de Danoth", "Véu de Redenção", "Véu de Vermes", "Árvore do Luto", 
+                "Égide de Euryale", "Ícone de Ravenloft"
+            ],
+            artefato: [
+                "Aggarath", "Almofariz e Pilão de Baba Yaga", "Amuleto do Fogo Infernal", "Anel do Dragão Divino", "Arco da Deusa da Natureza", 
+                "Armamentos de Agressão", "Cetro de Orcus", "Cetro de Rao", "Cetro de Rubi de Asmodeus", "Cetro de Sete Partes", 
+                "Chicote das Sombras", "Chicote do Deus das Trevas", "Chifre Fúnebre", "Cimitarra de Bronze do Sultão", 
+                "Contabilidade e Avaliação de Todas as Coisas", "Cálice do Deus Perdido", "Dentes de Dahlver-nar", "Elmo do Potencial Perfeito", 
+                "Espada de Kas", "Espada de Zariel", "Fim Sangrento", "Flagelo das Sombras", "Fragmentos de Gelo Verdadeiro", 
+                "Grimório de Grimlore", "Lanterna Maravilhosa de Daoud", "Lança da Ruína", "Lança do Deus da Luz", "Livro da Escuridão Perversa", 
+                "Livro da Escuridão Vil (variante)", "Livro dos Grandes Feitos", "Lâmina de Espelhos Quebrados", "Machado de Annam", 
+                "Machado dos Lordes Anões", "Malho Espancador", "Manopla Iônica", "Martelo do Deus da Forja", "Maça da Coroa Negra", 
+                "O Olho do Leviatã", "Olho e Mão de Vecna", "Orbe dos Dragões", "Pedra de Golorr", "Poderoso Servo de Leuk-0", 
+                "Pulseira Benéfica de Bigby", "Rancor Lustroso", "Ranseur de Tortura", "Revelação do Fim do Mundo", "Separador", 
+                "Tarokka de Almas da Mãe Luba", "Tomo Atemporal de Cronos", "Torre de Ferro Forjado", "Tridente do Deus do Mar", 
+                "Trono de Bronze", "Trono de Illefarn", "Trono do Crânio de Dragão", "Vindicador", "Vontade de Tiamat"
+            ]
+        };
+
+
+        // ==========================================
+        // ITENS DE RARIDADE VARIÁVEL
+        // ==========================================
+        // Cada versão entra automaticamente na categoria da sua raridade,
+        // e o botão "Raridade Variável" sorteia entre todas as versões.
+        // Itens sem "versoes" só saem no botão "Raridade Variável":
+        // é só preencher no mesmo formato para eles aparecerem nas outras categorias.
+        // "doGuia: true" marca o item como do Guia do Mestre (sai com mais frequência).
+
+        // Atalho para itens +1 / +2 / +3
+        function bonus(nome, raridade1, raridade2, raridade3) {
+            return {
+                [raridade1]: [`${nome} +1`],
+                [raridade2]: [`${nome} +2`],
+                [raridade3]: [`${nome} +3`]
+            };
+        }
+
+        const itensVariaveis = [
+            {
+                nome: "Poção de Cura", doGuia: true,
+                versoes: {
+                    comum: ["Poção de Cura"],
+                    incomum: ["Poção de Cura Maior"],
+                    raro: ["Poção de Cura Superior"],
+                    muitoRaro: ["Poção de Cura Suprema"]
+                }
+            },
+            {
+                nome: "Pergaminho de Magia", doGuia: true,
+                versoes: {
+                    comum: ["Pergaminho de Magia (truque)", "Pergaminho de Magia (1º círculo)"],
+                    incomum: ["Pergaminho de Magia (2º círculo)", "Pergaminho de Magia (3º círculo)"],
+                    raro: ["Pergaminho de Magia (4º círculo)", "Pergaminho de Magia (5º círculo)"],
+                    muitoRaro: ["Pergaminho de Magia (6º círculo)", "Pergaminho de Magia (7º círculo)", "Pergaminho de Magia (8º círculo)"],
+                    lendario: ["Pergaminho de Magia (9º círculo)"]
+                }
+            },
+            {
+                nome: "Poção de Força do Gigante", doGuia: true,
+                versoes: {
+                    incomum: ["Poção de Força do Gigante da Colina"],
+                    raro: ["Poção de Força do Gigante de Gelo", "Poção de Força do Gigante de Pedra", "Poção de Força do Gigante de Fogo"],
+                    muitoRaro: ["Poção de Força do Gigante das Nuvens"],
+                    lendario: ["Poção de Força do Gigante da Tempestade"]
+                }
+            },
+            {
+                nome: "Cinturão de Força do Gigante", doGuia: true,
+                versoes: {
+                    raro: ["Cinturão de Força do Gigante da Colina"],
+                    muitoRaro: ["Cinturão de Força do Gigante de Gelo", "Cinturão de Força do Gigante de Pedra", "Cinturão de Força do Gigante de Fogo"],
+                    lendario: ["Cinturão de Força do Gigante das Nuvens", "Cinturão de Força do Gigante da Tempestade"]
+                }
+            },
+            { nome: "Arma +1, +2 ou +3", doGuia: true, versoes: bonus("Arma", "incomum", "raro", "muitoRaro") },
+            { nome: "Armadura +1, +2 ou +3", doGuia: true, versoes: bonus("Armadura", "raro", "muitoRaro", "lendario") },
+            { nome: "Escudo +1, +2 ou +3", doGuia: true, versoes: bonus("Escudo", "incomum", "raro", "muitoRaro") },
+            { nome: "Munição +1, +2 ou +3", doGuia: true, versoes: bonus("Munição", "incomum", "raro", "muitoRaro") },
+            { nome: "Varinha do Arcano de Guerra", doGuia: true, versoes: bonus("Varinha do Arcano de Guerra", "incomum", "raro", "muitoRaro") },
+            { nome: "Bastão Guardião de Pactos", doGuia: true, versoes: bonus("Bastão Guardião de Pactos", "incomum", "raro", "muitoRaro") },
+            { nome: "Amuleto do Devoto", versoes: bonus("Amuleto do Devoto", "incomum", "raro", "muitoRaro") },
+            { nome: "Ferramenta para Todos os Fins", versoes: bonus("Ferramenta para Todos os Fins", "incomum", "raro", "muitoRaro") },
+            { nome: "Foice Lunar", versoes: bonus("Foice Lunar", "incomum", "raro", "muitoRaro") },
+            { nome: "Grimório Arcano", versoes: bonus("Grimório Arcano", "incomum", "raro", "muitoRaro") },
+            { nome: "Tambor do Compositor", versoes: bonus("Tambor do Compositor", "incomum", "raro", "muitoRaro") },
+            { nome: "Frasco do Poço de Sangue", versoes: bonus("Frasco do Poço de Sangue", "incomum", "raro", "muitoRaro") },
+            { nome: "Cinturão de Couro de Dragão", versoes: bonus("Cinturão de Couro de Dragão", "incomum", "raro", "muitoRaro") },
+            {
+                nome: "Trombeta do Valhalla", doGuia: true,
+                versoes: {
+                    raro: ["Trombeta do Valhalla de Prata", "Trombeta do Valhalla de Latão"],
+                    muitoRaro: ["Trombeta do Valhalla de Bronze"],
+                    lendario: ["Trombeta do Valhalla de Ferro"]
+                }
+            },
+            {
+                nome: "Bola de Cristal", doGuia: true,
+                versoes: {
+                    muitoRaro: ["Bola de Cristal"],
+                    lendario: ["Bola de Cristal de Ler Mentes", "Bola de Cristal de Telepatia", "Bola de Cristal da Visão da Verdade"]
+                }
+            },
+            {
+                nome: "Estátua de Poderes Incríveis", doGuia: true,
+                versoes: {
+                    incomum: ["Corvo de Prata"],
+                    raro: ["Grifo de Bronze", "Mosca de Ébano", "Leões Dourados", "Bodes de Marfim", "Elefante de Mármore", "Cachorro de Ônix", "Coruja de Serpentina"],
+                    muitoRaro: ["Corcel de Obsidiana"]
+                }
+            },
+            {
+                nome: "Instrumentos dos Bardos", doGuia: true,
+                versoes: {
+                    incomum: ["Alaúde de Doss", "Bandolim de Fochlucan", "Cítara de Mac-fuirmidh"],
+                    raro: ["Lira de Cli", "Mandolim de Canaith"],
+                    muitoRaro: ["Harpa de Anstruth"],
+                    lendario: ["Harpa de Oilamh"]
+                }
+            },
+            {
+                nome: "Pedra Iônica", doGuia: true,
+                versoes: {
+                    raro: ["Pedra Iônica da Prontidão", "Pedra Iônica da Proteção", "Pedra Iônica do Armazenamento", "Pedra Iônica do Sustento"],
+                    muitoRaro: ["Pedra Iônica de Absorção", "Pedra Iônica da Agilidade", "Pedra Iônica da Fortitude", "Pedra Iônica da Força",
+                                "Pedra Iônica da Intuição", "Pedra Iônica do Intelecto", "Pedra Iônica da Liderança"],
+                    lendario: ["Pedra Iônica da Grande Absorção", "Pedra Iônica da Maestria", "Pedra Iônica da Regeneração"]
+                }
+            },
+            {
+                nome: "Tatuagem de Barreira",
+                versoes: {
+                    incomum: ["Tatuagem de Barreira (CA 12 + Des)"],
+                    raro: ["Tatuagem de Barreira (CA 15 + Des, máx. 2)"],
+                    muitoRaro: ["Tatuagem de Barreira (CA 18)"]
+                }
+            },
+            {
+                nome: "Tatuagem da Magia Forjada",
+                versoes: {
+                    comum: ["Tatuagem da Magia Forjada (truque)", "Tatuagem da Magia Forjada (1º círculo)"],
+                    incomum: ["Tatuagem da Magia Forjada (2º círculo)", "Tatuagem da Magia Forjada (3º círculo)"],
+                    raro: ["Tatuagem da Magia Forjada (4º círculo)", "Tatuagem da Magia Forjada (5º círculo)"]
+                }
+            },
+            // Estes ainda não têm versões preenchidas
+            { nome: "Anel dos Lucis" },
+            { nome: "Arnês de Defesa" },
+            { nome: "Couro Batido Infernal" },
+            { nome: "Gema de Armazenamento" }
+        ];
+
+
+        // ==========================================
+        // ITENS DO GUIA DO MESTRE (saem com mais frequência)
+        // ==========================================
+        // Os itens de raridade variável do Guia já estão marcados lá em cima com "doGuia: true".
+        // Se escrever um nome errado aqui, aparece um aviso no console do navegador (F12).
+        const itensDoGuiaDoMestre = new Set([
+            // Comum
+            "Poção de Escalar",
+
+            // Incomum
+            "Aljava de Ehlonna", "Amuleto de Proteção Contra Detecção e Localização", "Anel de Andar na Água",
+            "Anel de Calor", "Anel de Escudo Mental", "Anel de Natação", "Anel de Saltar", "Arma de Alerta",
+            "Armadura de Adamante", "Armadura de Mitral", "Armadura do Marinheiro", "Azagaia de Relâmpago",
+            "Bastão Imóvel", "Botas Aladas", "Botas de Caminhar e Saltar", "Botas do Inverno", "Botas Élficas",
+            "Braçadeiras de Arquearia", "Broche do Escudo", "Cajado da Píton", "Cajado da Víbora",
+            "Capa de Respirar na Água", "Chapéu de Disfarce", "Colar de Adaptação", "Corda de Escalada",
+            "Decantador de Água Infinita", "Diadema da Destruição", "Elmo de Compreensão de Idiomas",
+            "Elmo de Telepatia", "Escudo Sentinela", "Espada da Vingança", "Flauta Assombrada", "Flauta dos Esgotos",
+            "Garrafa de Fumaça Eterna", "Gema da Luminosidade", "Gema Elemental", "Jarro de Alquimia",
+            "Lanterna de Revelação", "Leque do Vento", "Luvas de Apanhar Projéteis", "Luvas de Nadar e Escalar",
+            "Luvas do Ladrão", "Manoplas de Força do Ogro", "Manto da Arraia", "Manto de Proteção", "Manto Élfico",
+            "Medalhão de Pensamentos", "Mochila de Carga", "Olhos de Águia", "Olhos de Visão Momentânea",
+            "Olhos do Encantamento", "Pedra da Boa Sorte", "Pedras de Mensagem", "Periapto de Cicatrização",
+            "Periapto de Saúde", "Pérola do Poder", "Poção de Amizade Animal", "Poção de Aumentar",
+            "Poção de Envenenamento", "Poção de Resistência", "Poção de Respirar na Água", "Poção de Sopro de Fogo",
+            "Pó da Seca", "Pó de Desaparecimento", "Pó de Espirrar e Tossir", "Robe dos Itens Úteis",
+            "Sandálias de Patas de Aranha", "Sela de Cavaleiro", "Tiara do Intelecto", "Tridente de Comandar Peixes",
+            "Unguento de Keoghtom", "Varinha de Detectar Magia", "Varinha de Mísseis Mágicos", "Varinha de Segredos",
+            "Varinha de Teia", "Vassoura Voadora", "Óculos Noturnos", "Óleo Escorregadio",
+
+            // Raro
+            "Adaga do Envenenamento", "Algemas Dimensionais", "Amuleto de Saúde", "Anel de Ação Livre",
+            "Anel de Armazenar Magia", "Anel de Cativar Animais", "Anel de Evasão", "Anel de Proteção",
+            "Anel de Queda Suave", "Anel de Resistência", "Anel de Visão de Raio-x", "Anel do Aríete", "Arma Viciosa",
+            "Armadura de Resistência", "Armadura de Vulnerabilidade", "Asas Voadoras",
+            "Bacia de Comandar Elementais da Água", "Barco Dobrável", "Bastão do Tentáculo", "Botas de Levitação",
+            "Botas de Velocidade", "Braceletes de Defesa", "Braseiro de Comandar Elementais do Fogo", "Buraco Portátil",
+            "Cajado das Florestas", "Cajado de Cura", "Cajado de Definhamento", "Cajado de Enfeitiçar",
+            "Cajado de Enxame de Insetos", "Capa do Saltimbanco", "Carrilhão de Abertura", "Cetro do Governante",
+            "Cinto dos Anões", "Colar de Bolas de Fogo", "Contas de Força", "Corda de Estrangulamento",
+            "Corrente de Contas de Oração", "Couro Batido Encantado", "Cubo de Força", "Elixir de Saúde",
+            "Elmo de Teletransporte", "Escudo Apanhador de Flechas", "Escudo de Atração de Projéteis",
+            "Espada do Furto de Vidas", "Espada do Sangramento", "Faixas de Ferro de Bilarro", "Ferraduras da Velocidade",
+            "Fortaleza Instantânea de Daern", "Gema de Visão", "Lâmina do Sol", "Língua Flamejante", "Machado Furioso",
+            "Malha Élfica", "Manto de Deslocamento", "Manto de Resistência à Magia", "Manto do Morcego",
+            "Matadora de Dragões", "Matadora de Gigantes", "Maça da Destruição", "Maça do Rompimento", "Maça do Terror",
+            "Pedra de Comandar Elementais da Terra", "Pergaminho de Proteção", "Periapto de Proteção Contra Veneno",
+            "Poção de Clarividência", "Poção de Encolher", "Poção de Forma Gasosa", "Poção de Heroísmo",
+            "Poção de Invulnerabilidade", "Poção de Ler Mentes", "Robe dos Olhos", "Saco de Feijões",
+            "Sacola Prestativa de Heward", "Trombeta da Destruição", "Varinha das Maravilhas", "Varinha de Bolas de Fogo",
+            "Varinha de Detecção de Inimigos", "Varinha de Medo", "Varinha de Obrigação", "Varinha de Paralisia",
+            "Varinha de Relâmpagos", "Óleo de Forma Etérea",
+
+            // Muito Raro
+            "Amuleto dos Planos", "Anel de Estrelas Cadentes", "Anel de Regeneração", "Anel de Telecinésia",
+            "Arco do Juramento", "Armadura Anã", "Armadura Demoníaca", "Arremessador Anão", "Bastão de Absorção",
+            "Bastão de Prontidão", "Bastão de Segurança", "Bolsa Devoradora", "Brunea de Escamas de Dragão",
+            "Cajado de Ataque", "Cajado de Trovão e Relâmpago", "Cajado do Fogo", "Cajado do Frio", "Cajado do Poder",
+            "Cimitarra de Velocidade", "Elmo Brilhante", "Escudo Animado", "Escudo de Proteção Contra Magia",
+            "Espada Dançarina", "Espada Decepadora", "Espelho do Aprisionamento", "Ferraduras do Zéfiro",
+            "Flecha Assassina", "Garrafa do Efreeti", "Ladra das Nove Vidas", "Manto da Aranha",
+            "Manual de Rapidez de Movimentos", "Manual de Saúde Corporal", "Manual do Bom Exercício", "Manual dos Golens",
+            "Marca Congelante", "Pigmentos Maravilhosos de Nolzur", "Poção de Invisibilidade", "Poção de Longevidade",
+            "Poção de Velocidade", "Poção de Vitalidade", "Poção de Voo", "Robe das Cores Cintilantes", "Robe das Estrelas",
+            "Tapete Voador", "Tomo da Compreensão", "Tomo de Liderança e Influência", "Tomo dos Grandes Pensamentos",
+            "Varinha de Metamorfose", "Vela de Invocação", "Óleo de Precisão",
+
+            // Lendário
+            "Anel de Comandar Elementais da Terra", "Anel de Comandar Elementais da Água", "Anel de Comandar Elementais do Ar",
+            "Anel de Comandar Elementais do Fogo", "Anel de Invisibilidade", "Anel de Invocação de Djinni",
+            "Anel de Refletir Magias", "Anel dos Três Desejos", "Armadura de Invulnerabilidade",
+            "Armadura de Placas da Forma Etérea", "Baralho de Muitas Coisas", "Bastão de Ressurreição",
+            "Bastão do Grande Poder", "Cajado do Arcano", "Cola Soberana", "Cubo do Portal", "Defensora",
+            "Dispositivo de Kwalish", "Escaravelho de Proteção", "Esfera de Aniquilação", "Espada da Retaliação",
+            "Espada Vorpal", "Frasco de Ferro", "Lâmina da Sorte", "Malha do Efreeti", "Manto de Invisibilidade",
+            "Martelo dos Trovões", "Poço dos Muitos Mundos", "Robe do Arquimago", "Solvente Universal",
+            "Talismã da Bondade Pura", "Talismã da Esfera", "Talismã do Mal Absoluto", "Tomo da Língua Quieta",
+            "Vingadora Sagrada",
+
+            // Artefato
+            "Cetro de Orcus", "Cetro de Sete Partes", "Espada de Kas", "Livro da Escuridão Perversa",
+            "Livro dos Grandes Feitos", "Machado dos Lordes Anões", "Olho e Mão de Vecna", "Orbe dos Dragões"
+        ]);
+
+        const nomesRaridade = {
+            comum: "Comum",
+            incomum: "Incomum",
+            raro: "Raro",
+            muitoRaro: "Muito Raro",
+            lendario: "Lendário",
+            artefato: "Artefato",
+            variavel: "Raridade Variável"
+        };
+
+
+        // ==========================================
+        // MONTAGEM DAS TABELAS DE SORTEIO
+        // ==========================================
+        const tabelas = {};
+        Object.keys(listaDeItens).forEach(raridade => tabelas[raridade] = new Map());
+
+        function adicionarNaTabela(raridade, nome, doGuia) {
+            const tabela = tabelas[raridade];
+            if (!tabela) {
+                console.warn(`Raridade desconhecida "${raridade}" no item "${nome}"`);
+                return;
+            }
+            const existente = tabela.get(nome);
+            if (existente) {
+                // O item já estava na lista: não duplica, só atualiza a marcação do Guia
+                existente.doGuia = existente.doGuia || doGuia;
+            } else {
+                tabela.set(nome, { nome, raridade, doGuia });
+            }
+        }
+
+        for (const [raridade, nomes] of Object.entries(listaDeItens)) {
+            nomes.forEach(nome => adicionarNaTabela(raridade, nome, itensDoGuiaDoMestre.has(nome)));
+        }
+
+        for (const item of itensVariaveis) {
+            for (const [raridade, nomes] of Object.entries(item.versoes || {})) {
+                nomes.forEach(nome => adicionarNaTabela(raridade, nome, Boolean(item.doGuia) || itensDoGuiaDoMestre.has(nome)));
+            }
+        }
+
+        const sorteios = {};
+        for (const [raridade, tabela] of Object.entries(tabelas)) {
+            sorteios[raridade] = [...tabela.values()];
+        }
+
+        // Avisa no console se algum nome da lista do Guia não bate com nenhum item
+        const todosOsItens = Object.values(sorteios).flat();
+        const todosOsNomes = new Set(todosOsItens.map(item => item.nome));
+        itensDoGuiaDoMestre.forEach(nome => {
+            if (!todosOsNomes.has(nome)) console.warn(`Item do Guia do Mestre não encontrado nas listas: "${nome}"`);
+        });
+
+        // Contador de itens
+        itensVariaveis.filter(item => !item.versoes).forEach(item => todosOsNomes.add(item.nome));
+        const totalDoGuia = new Set(todosOsItens.filter(item => item.doGuia).map(item => item.nome)).size;
+        document.querySelector('.contador').textContent =
+            `Banco de dados: ${todosOsNomes.size} itens ativos, ${totalDoGuia} deles do Guia do Mestre`;
+
+
+        // ==========================================
+        // LÓGICA DE SORTEIO
+        // ==========================================
+        const pesoDe = item => item.doGuia ? PESO_GUIA_DO_MESTRE : 1;
+
+        function sortearComPeso(lista) {
+            const total = lista.reduce((soma, item) => soma + pesoDe(item), 0);
+            let sorte = Math.random() * total;
+            for (const item of lista) {
+                sorte -= pesoDe(item);
+                if (sorte < 0) return item;
+            }
+            return lista[lista.length - 1];
+        }
+
+        function sortearVariavel() {
+            const familia = sortearComPeso(itensVariaveis);
+            const versoes = Object.entries(familia.versoes || {})
+                .flatMap(([raridade, nomes]) => nomes.map(nome => ({ nome, raridade })));
+
+            if (versoes.length === 0) {
+                return { nome: familia.nome, raridade: null, doGuia: Boolean(familia.doGuia) };
+            }
+            const versao = versoes[Math.floor(Math.random() * versoes.length)];
+            return {
+                nome: versao.nome,
+                raridade: versao.raridade,
+                doGuia: Boolean(familia.doGuia) || itensDoGuiaDoMestre.has(versao.nome)
+            };
+        }
+
+        let timeoutRolagem = null;
+        let ultimoItem = null;
+
+        function rolarItem(raridade) {
+            // Sorteia, tentando não repetir o item anterior
+            let resultado;
+            for (let tentativa = 0; tentativa < 10; tentativa++) {
+                resultado = raridade === 'variavel' ? sortearVariavel() : sortearComPeso(sorteios[raridade]);
+                if (resultado.nome !== ultimoItem) break;
+            }
+            ultimoItem = resultado.nome;
+
+            const divResultado = document.getElementById('resultado');
+            
+            // Efeito visual rápido de rolagem de dados
+            divResultado.innerHTML = `<span style="color: #666; font-size: 20px;">${NOME_DO_MAGO} está revirando o baú...</span>`;
+            falar(escolherFala(falasProcurando), VELOCIDADE_REACAO);
+            
+            // Cancela uma rolagem anterior que ainda não terminou (cliques rápidos)
+            clearTimeout(timeoutRolagem);
+            timeoutRolagem = setTimeout(() => {
+                let categoria = resultado.raridade
+                    ? nomesRaridade[resultado.raridade]
+                    : "Raridade variável (a critério do mestre)";
+                if (raridade === 'variavel' && resultado.raridade) categoria += " (raridade variável)";
+                if (resultado.doGuia) categoria += ", do Guia do Mestre";
+
+                divResultado.innerHTML = `
+                    ${resultado.nome} 
+                    <div class="raridade-label">Categoria: ${categoria}</div>
+                `;
+
+                // O mago comenta o achado
+                let tipoDeReacao = raridade;
+                if (raridade === 'variavel') tipoDeReacao = resultado.raridade ? 'variavel' : 'semRaridade';
+                falar(escolherFala(reacoes[tipoDeReacao]), VELOCIDADE_REACAO);
+            }, 500);
+        }
+    </script>
+</body>
+</html>
