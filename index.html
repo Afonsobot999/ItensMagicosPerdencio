@@ -256,6 +256,9 @@
             outline: 3px solid #ffd700;
             outline-offset: 2px;
         }
+        .filtro-topo.chances {
+            margin-top: 16px;
+        }
         .filtro-resumo {
             font-size: 13px;
             color: #999;
@@ -400,6 +403,11 @@
                 </div>
                 <p id="resumo-fontes" class="filtro-resumo">Usando todas as fontes</p>
                 <div id="lista-fontes" class="lista-fontes" hidden></div>
+                <div class="filtro-topo chances">
+                    <button type="button" id="botao-dmg-triplo" class="filtro-botao" aria-pressed="false" onclick="definirChances(3)">Guia do Mestre 3x</button>
+                    <button type="button" id="botao-chances-normais" class="filtro-botao ativo" aria-pressed="true" onclick="definirChances(1)">Chances normais</button>
+                </div>
+                <p id="resumo-chances" class="filtro-resumo">Todos os itens com a mesma chance</p>
             </div>
 
             <div id="resultado">Perdêncio aguarda sua escolha...</div>
@@ -5108,6 +5116,34 @@
             try { localStorage.setItem(CHAVE_DO_FILTRO, JSON.stringify([...fontesAtivas])); } catch (erro) { }
         }
 
+        // Chance extra para o Guia do Mestre (1 = chances normais, 3 = três vezes mais chance)
+        const CHAVE_DO_PESO = CHAVE_DO_FILTRO + "-peso";
+        let pesoGuiaDoMestre = 1;
+        try { if (localStorage.getItem(CHAVE_DO_PESO) === "3") pesoGuiaDoMestre = 3; } catch (erro) { }
+
+        function definirChances(peso) {
+            pesoGuiaDoMestre = peso;
+            try { localStorage.setItem(CHAVE_DO_PESO, String(peso)); } catch (erro) { }
+            atualizarBotoesDeChance();
+            falar(peso === 3
+                ? "Combinado! Vou fuçar primeiro nas prateleiras do Guia do Mestre."
+                : "Certo, sorteio justo de novo: todo item com a mesma chance!", VELOCIDADE_REACAO);
+        }
+
+        function atualizarBotoesDeChance() {
+            const triplo = pesoGuiaDoMestre === 3;
+            [['botao-dmg-triplo', triplo], ['botao-chances-normais', !triplo]].forEach(([id, ativo]) => {
+                const botao = document.getElementById(id);
+                botao.classList.toggle('ativo', ativo);
+                botao.setAttribute('aria-pressed', String(ativo));
+            });
+            document.getElementById('resumo-chances').textContent = !triplo
+                ? "Todos os itens com a mesma chance"
+                : fontesAtivas.has('DMG')
+                    ? "Itens do Guia do Mestre com 3x mais chance de aparecer"
+                    : "Guia do Mestre 3x ligado, mas o livro está desmarcado no filtro";
+        }
+
         // Quantos itens cada livro tem (aparece ao lado do nome na lista)
         const itensPorLivro = {};
         itens.forEach(item => itensPorLivro[item.livro] = (itensPorLivro[item.livro] || 0) + 1);
@@ -5231,6 +5267,8 @@
                 const raridade = botao.dataset.raridade;
                 botao.classList.toggle('vazio', !temItens(raridade));
             });
+
+            atualizarBotoesDeChance();
         }
 
         const temItens = raridade => raridade === 'variavel' ? familiasVariaveis.length > 0 : tabelas[raridade].length > 0;
@@ -5282,12 +5320,25 @@
         // ==========================================
         const sortear = lista => lista[Math.floor(Math.random() * lista.length)];
 
+        // Peso de cada entrada no sorteio: com o botão "Guia do Mestre 3x", os itens desse livro valem 3
+        const pesoDaEntrada = entrada => ((entrada.item || entrada.familia || entrada).livro === 'DMG') ? pesoGuiaDoMestre : 1;
+
+        function sortearComPeso(lista) {
+            const total = lista.reduce((soma, entrada) => soma + pesoDaEntrada(entrada), 0);
+            let sorteio = Math.random() * total;
+            for (const entrada of lista) {
+                sorteio -= pesoDaEntrada(entrada);
+                if (sorteio < 0) return entrada;
+            }
+            return lista[lista.length - 1];
+        }
+
         function escolherItem(raridade) {
             if (raridade === 'variavel') {
-                const familia = sortear(familiasVariaveis);
+                const familia = sortearComPeso(familiasVariaveis);
                 return { familia, versao: sortear(familia.versoes) };
             }
-            const entrada = sortear(tabelas[raridade]);
+            const entrada = sortearComPeso(tabelas[raridade]);
             return entrada.item ? { item: entrada.item } : { familia: entrada.familia, versao: sortear(entrada.versoes) };
         }
 
